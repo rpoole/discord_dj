@@ -1,7 +1,14 @@
-let settings = JSON.parse(require('fs').readFileSync('settings.json', 'utf8'));
+let fs = require('fs');
+let path = require('path');
 let Discord = require('discord.js');
+let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+let MusicPlayer = require('./player.js');
+
 
 let bot = new Discord.Client();
+let player = null;
+
+const ALLOWED_FILE_TYPES = ['.m4a', '.webm'];
 
 let commands = {
   request() {
@@ -25,18 +32,41 @@ let commands = {
       .joinVoiceChannel(channel)
       .then(() => {
         let joinedMessage = 'The big D is here to give you some Jays.';
+        player = new MusicPlayer(bot.voiceConnection);
         return bot
           .reply(msg, joinedMessage, {tts: true});
       });
   },
   start() {
-    return Promise.reject('NYI');
+    if (!bot.voiceConnection) {
+      return Promise.reject('You need to summon the bot to a room first!.');
+    }
+
+    let playlists = getDirectories(settings.playlistFolder);
+    let fileNames = [];
+    playlists.forEach(p => {
+      let playlistPath = `${settings.playlistFolder}${p}/`;
+      let files = fs.readdirSync(playlistPath);
+      files.forEach(f => {
+        if (ALLOWED_FILE_TYPES.indexOf(path.extname(f)) !== -1) {
+          let filePath = `${playlistPath}${f}`;
+          fileNames.push(filePath);
+        }
+      });
+    });
+
+    player.addSongsToCurrentPlaylist(fileNames);
+    return player.next();
   },
-  pause() {
-    return Promise.reject('NYI');
+  skip() {
+    return player.skip();
   },
   stop() {
-    return Promise.reject('NYI');
+    if (!bot.voiceConnection) {
+      return Promise.reject('You need to summon the bot to a room first!.');
+    }
+
+    return player.stop();
   },
   help({msg: msg}) {
     let availableCommands = Object.keys(this).join(', ');
@@ -45,6 +75,12 @@ let commands = {
       .reply(msg, response);
   },
 };
+
+function getDirectories(srcpath) {
+  return fs.readdirSync(srcpath).filter(file => {
+    return fs.statSync(path.join(srcpath, file)).isDirectory();
+  });
+}
 
 function runCommand(command, opts) {
   if (!(command in commands)) {
