@@ -5,6 +5,7 @@ class MusicPlayer {
   constructor(vc) {
     this.vc = vc;
     this.currentPlaylist = [];
+    this.playedSongs = [];
     this.currentSong = null;
     this.isPlaying = false;
     this.shouldStop = false;
@@ -23,6 +24,9 @@ class MusicPlayer {
       return Promise.reject('Already playing!');
     }
 
+    this.playedSongs = [];
+    this.currentPlaylist = this.playedSongs.concat(this.currentPlaylist);
+
     return this._next();
   }
 
@@ -32,6 +36,7 @@ class MusicPlayer {
     }
 
     let nextSong = this.currentPlaylist.shift();
+    this.playedSongs.push(nextSong);
 
     return this
       .vc
