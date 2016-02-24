@@ -1,4 +1,4 @@
-const volume = .1;
+const volume = 0.1;
 
 class MusicPlayer {
 

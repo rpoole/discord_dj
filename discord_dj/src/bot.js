@@ -141,5 +141,5 @@ bot
 
 function handleErr(err) {
   console.error(err);
-  exit();
+  process.exit();
 }
