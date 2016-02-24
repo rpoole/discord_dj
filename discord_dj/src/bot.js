@@ -8,28 +8,19 @@ let MusicPlayer = require('./player.js');
 let bot = new Discord.Client();
 let player = null;
 
-const ALLOWED_FILE_TYPES = ['.m4a', '.webm'];
+const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4'];
 
 let commands = {
   request() {
     return Promise.reject('NYI');
   },
-  summon({msg: msg, args: args}) {
-    if (args.length === 0) {
-      return Promise.reject('No room supplied.');
+  summon({msg: msg}) {
+    if (!msg.author.voiceChannel) {
+      return Promise.reject('You must be in a voice room!');
     }
-
-    let roomName = args.join(' ');
-    let channel = bot.channels.filter( c => c.name.toLowerCase() === roomName);
-
-    if (channel.length != 1) {
-      return Promise.reject(`Unable to find channel ${roomName}.`);
-    }
-
-    channel = channel[0];
 
     return bot
-      .joinVoiceChannel(channel)
+      .joinVoiceChannel(msg.author.voiceChannel)
       .then(() => {
         let joinedMessage = 'The big D is here to give you some Jays.';
         player = new MusicPlayer(bot.voiceConnection);
@@ -37,14 +28,20 @@ let commands = {
           .reply(msg, joinedMessage, {tts: true});
       });
   },
-  start() {
+  start({args: args}) {
     if (!bot.voiceConnection) {
       return Promise.reject('You need to summon the bot to a room first!.');
     }
 
+    let selectedPlaylists = args;
     let playlists = getDirectories(settings.playlistFolder);
     let fileNames = [];
+
     playlists.forEach(p => {
+      if (selectedPlaylists.length > 0 && selectedPlaylists.indexOf(p) === -1) {
+        return;
+      }
+
       let playlistPath = `${settings.playlistFolder}${p}/`;
       let files = fs.readdirSync(playlistPath);
       files.forEach(f => {
@@ -56,7 +53,7 @@ let commands = {
     });
 
     player.addSongsToCurrentPlaylist(fileNames);
-    return player.next();
+    return player.start();
   },
   skip() {
     return player.skip();
