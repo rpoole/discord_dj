@@ -1,18 +1,22 @@
+"use strict";
+
 let fs = require('fs');
 let path = require('path');
 let Discord = require('discord.js');
 let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
 let MusicPlayer = require('./player.js');
-
+let ytdl = require('ytdl-core');
+let ffmpeg = require('ffmpeg');
 
 let bot = new Discord.Client();
 let player = null;
 
-const ALLOWED_FILE_TYPES = ['.m4a', '.webm'];
+const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4'];
 
 let commands = {
-  request() {
-    return Promise.reject('NYI');
+  request({msg: msg, args: args}) {
+    ytdl(args.toString(), {filter: function(format) { return !format.bitrate && format.audioBitrate; }})
+        .pipe(fs.createWriteStream('test.mp4'));
   },
   summon({msg: msg, args: args}) {
     if (args.length === 0) {
@@ -37,7 +41,7 @@ let commands = {
           .reply(msg, joinedMessage, {tts: true});
       });
   },
-  start() {
+  start({}) {
     if (!bot.voiceConnection) {
       return Promise.reject('You need to summon the bot to a room first!.');
     }
@@ -45,7 +49,7 @@ let commands = {
     let playlists = getDirectories(settings.playlistFolder);
     let fileNames = [];
     playlists.forEach(p => {
-      let playlistPath = `${settings.playlistFolder}${p}/`;
+      let playlistPath = `${settings.playlistFolder}/${p}/`;
       let files = fs.readdirSync(playlistPath);
       files.forEach(f => {
         if (ALLOWED_FILE_TYPES.indexOf(path.extname(f)) !== -1) {
@@ -55,8 +59,7 @@ let commands = {
       });
     });
 
-    player.addSongsToCurrentPlaylist(fileNames);
-    return player.next();
+    return bot.voiceConnection.playFile(fileNames[0]);
   },
   skip() {
     return player.skip();
@@ -91,7 +94,7 @@ function runCommand(command, opts) {
 }
 
 function parseCommandInput(cleanContent) {
-  let commandArgs = cleanContent.toLowerCase().split(' ');
+  let commandArgs = cleanContent.split(' ');
   commandArgs.shift(); // remove the mention
   let command = commandArgs.splice(0,1);
 

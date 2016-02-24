@@ -15,7 +15,7 @@ gulp.task('load', () => {
   return gulp
     .src('')
     .pipe(shell([
-          'node discord_dj/out/bot.js',
+          'node discord_dj/out/bot.js'
     ]));
 });
 
