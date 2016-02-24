@@ -4,4 +4,5 @@ node_modules/
 .tern-project
 .python-version
 .vimrc
-auth.json
+settings.json
+.ackrc
