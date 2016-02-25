@@ -10,55 +10,71 @@ let ytdl = require('ytdl-core');
 let bot = new Discord.Client();
 let player = null;
 
+<<<<<<< HEAD
 const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4'];
+=======
+const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4', '.mp3'];
+>>>>>>> origin/master
 
 let commands = {
   request({msg: msg, args: args}) {
     ytdl(args.toString(), {filter: function(format) { return !format.bitrate && format.audioBitrate; }})
         .pipe(fs.createWriteStream('test.mp4'));
   },
-  summon({msg: msg, args: args}) {
-    if (args.length === 0) {
-      return Promise.reject('No room supplied.');
+  summon({msg: msg}) {
+    if (!msg.author.voiceChannel) {
+      return Promise.reject('You must be in a voice room!');
     }
-
-    let roomName = args.join(' ');
-    let channel = bot.channels.filter( c => c.name.toLowerCase() === roomName);
-
-    if (channel.length != 1) {
-      return Promise.reject(`Unable to find channel ${roomName}.`);
-    }
-
-    channel = channel[0];
 
     return bot
-      .joinVoiceChannel(channel)
+      .joinVoiceChannel(msg.author.voiceChannel)
       .then(() => {
         let joinedMessage = 'The big D is here to give you some Jays.';
         player = new MusicPlayer(bot.voiceConnection);
+        console.log(player);
         return bot
-          .reply(msg, joinedMessage, {tts: true});
+          .reply(msg, joinedMessage);
       });
   },
+<<<<<<< HEAD
   start({}) {
+=======
+  start({args: args}) {
+>>>>>>> origin/master
     if (!bot.voiceConnection) {
       return Promise.reject('You need to summon the bot to a room first!.');
     }
 
+    let selectedPlaylists = args;
     let playlists = getDirectories(settings.playlistFolder);
     let fileNames = [];
+
     playlists.forEach(p => {
+<<<<<<< HEAD
       let playlistPath = `${settings.playlistFolder}/${p}/`;
+=======
+      if (selectedPlaylists.length > 0 && selectedPlaylists.indexOf(p) === -1) {
+        return;
+      }
+
+      let playlistPath = `${settings.playlistFolder}${p}/`;
+>>>>>>> origin/master
       let files = fs.readdirSync(playlistPath);
       files.forEach(f => {
         if (ALLOWED_FILE_TYPES.indexOf(path.extname(f)) !== -1) {
-          let filePath = `${playlistPath}${f}`;
+          let filePath = path.resolve(`${playlistPath}${f}`);
+
           fileNames.push(filePath);
         }
       });
     });
 
+<<<<<<< HEAD
     return bot.voiceConnection.playFile(fileNames[0]);
+=======
+    player.addSongsToCurrentPlaylist(fileNames);
+    return player.start();
+>>>>>>> origin/master
   },
   skip() {
     return player.skip();
@@ -141,7 +157,11 @@ bot
     console.info('Successful login!'); 
   });
 
+bot.on("debug", info => {
+  console.log(info);
+});
+
 function handleErr(err) {
   console.error(err);
-  exit();
+  process.exit();
 }
