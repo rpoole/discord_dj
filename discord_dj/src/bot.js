@@ -10,11 +10,7 @@ let ytdl = require('ytdl-core');
 let bot = new Discord.Client();
 let player = null;
 
-<<<<<<< HEAD
-const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4'];
-=======
 const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4', '.mp3'];
->>>>>>> origin/master
 
 let commands = {
   request({msg: msg, args: args}) {
@@ -36,11 +32,7 @@ let commands = {
           .reply(msg, joinedMessage);
       });
   },
-<<<<<<< HEAD
-  start({}) {
-=======
   start({args: args}) {
->>>>>>> origin/master
     if (!bot.voiceConnection) {
       return Promise.reject('You need to summon the bot to a room first!.');
     }
@@ -50,15 +42,11 @@ let commands = {
     let fileNames = [];
 
     playlists.forEach(p => {
-<<<<<<< HEAD
-      let playlistPath = `${settings.playlistFolder}/${p}/`;
-=======
       if (selectedPlaylists.length > 0 && selectedPlaylists.indexOf(p) === -1) {
         return;
       }
 
       let playlistPath = `${settings.playlistFolder}${p}/`;
->>>>>>> origin/master
       let files = fs.readdirSync(playlistPath);
       files.forEach(f => {
         if (ALLOWED_FILE_TYPES.indexOf(path.extname(f)) !== -1) {
@@ -68,13 +56,8 @@ let commands = {
         }
       });
     });
-
-<<<<<<< HEAD
-    return bot.voiceConnection.playFile(fileNames[0]);
-=======
     player.addSongsToCurrentPlaylist(fileNames);
     return player.start();
->>>>>>> origin/master
   },
   skip() {
     return player.skip();
