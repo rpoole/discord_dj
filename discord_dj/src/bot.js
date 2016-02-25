@@ -6,7 +6,6 @@ let Discord = require('discord.js');
 let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
 let MusicPlayer = require('./player.js');
 let ytdl = require('ytdl-core');
-let ffmpeg = require('ffmpeg');
 
 let bot = new Discord.Client();
 let player = null;
