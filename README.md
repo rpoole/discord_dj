@@ -1,6 +1,5 @@
 Bot that allows local playlists and requests in discord.
 
-Install these 2
 
 https://github.com/coreybutler/nvm-windows (for development on windows)
 
