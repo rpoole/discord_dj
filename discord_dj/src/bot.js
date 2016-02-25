@@ -1,18 +1,21 @@
+"use strict";
+
 let fs = require('fs');
 let path = require('path');
 let Discord = require('discord.js');
 let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
 let MusicPlayer = require('./player.js');
-
+let ytdl = require('ytdl-core');
 
 let bot = new Discord.Client();
 let player = null;
 
-const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4'];
+const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4', '.mp3'];
 
 let commands = {
-  request() {
-    return Promise.reject('NYI');
+  request({msg: msg, args: args}) {
+    ytdl(args.toString(), {filter: function(format) { return !format.bitrate && format.audioBitrate; }})
+        .pipe(fs.createWriteStream('test.mp4'));
   },
   summon({msg: msg}) {
     if (!msg.author.voiceChannel) {
@@ -24,8 +27,9 @@ let commands = {
       .then(() => {
         let joinedMessage = 'The big D is here to give you some Jays.';
         player = new MusicPlayer(bot.voiceConnection);
+        console.log(player);
         return bot
-          .reply(msg, joinedMessage, {tts: true});
+          .reply(msg, joinedMessage);
       });
   },
   start({args: args}) {
@@ -46,12 +50,12 @@ let commands = {
       let files = fs.readdirSync(playlistPath);
       files.forEach(f => {
         if (ALLOWED_FILE_TYPES.indexOf(path.extname(f)) !== -1) {
-          let filePath = `${playlistPath}${f}`;
+          let filePath = path.resolve(`${playlistPath}${f}`);
+
           fileNames.push(filePath);
         }
       });
     });
-
     player.addSongsToCurrentPlaylist(fileNames);
     return player.start();
   },
@@ -88,7 +92,7 @@ function runCommand(command, opts) {
 }
 
 function parseCommandInput(cleanContent) {
-  let commandArgs = cleanContent.toLowerCase().split(' ');
+  let commandArgs = cleanContent.split(' ');
   commandArgs.shift(); // remove the mention
   let command = commandArgs.splice(0,1);
 
@@ -135,6 +139,10 @@ bot
   .then(() => { 
     console.info('Successful login!'); 
   });
+
+bot.on("debug", info => {
+  console.log(info);
+});
 
 function handleErr(err) {
   console.error(err);
