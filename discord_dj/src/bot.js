@@ -8,7 +8,7 @@ let MusicPlayer = require('./player.js');
 let bot = new Discord.Client();
 let player = null;
 
-const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4'];
+const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4', '.mp3'];
 
 let commands = {
   request() {
@@ -24,8 +24,9 @@ let commands = {
       .then(() => {
         let joinedMessage = 'The big D is here to give you some Jays.';
         player = new MusicPlayer(bot.voiceConnection);
+        console.log(player);
         return bot
-          .reply(msg, joinedMessage, {tts: true});
+          .reply(msg, joinedMessage);
       });
   },
   start({args: args}) {
@@ -46,7 +47,8 @@ let commands = {
       let files = fs.readdirSync(playlistPath);
       files.forEach(f => {
         if (ALLOWED_FILE_TYPES.indexOf(path.extname(f)) !== -1) {
-          let filePath = `${playlistPath}${f}`;
+          let filePath = path.resolve(`${playlistPath}${f}`);
+
           fileNames.push(filePath);
         }
       });
@@ -135,6 +137,10 @@ bot
   .then(() => { 
     console.info('Successful login!'); 
   });
+
+bot.on("debug", info => {
+  console.log(info);
+});
 
 function handleErr(err) {
   console.error(err);
