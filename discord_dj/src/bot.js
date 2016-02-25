@@ -4,6 +4,7 @@ let fs = require('fs');
 let path = require('path');
 let Discord = require('discord.js');
 let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+let rest = require('node-rest-client');
 let MusicPlayer = require('./player.js');
 let ytdl = require('ytdl-core');
 
@@ -75,6 +76,39 @@ let commands = {
     return bot
       .reply(msg, response);
   },
+  test({msg: msg}) {
+    let apiKey = 'A9F8F8AE71DB176986D19B3645B3EE4F';
+    let tricepzID = '76561198043899518';
+    let test = new rest.Client();
+    let radiantVictory = '';
+    test.get(`https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/v001/?account_id=${tricepzID}&key=${apiKey}`,
+        function (data) {
+          let mostRecentMatch = (data.result.matches[0].match_id);
+          test.get(`https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/v1/?key=${apiKey}&match_id=${mostRecentMatch}`,
+            function (data) {
+              if (data.result.radiant_win === 0) {
+                console.log('wtf');
+                radiantVictory = 'lost';
+              }
+              else {
+                console.log('okay');
+                radiantVictory = 'won';
+                console.log('zzz');
+                return radiantVictory;
+              }
+
+              data.result.players.find( function isZack(element) {
+                var start = '83633790';
+                while (start != element) {
+                  return false;
+                }
+                return element;
+              });
+            });
+        });
+    return bot
+        .reply(msg, radiantVictory);
+  }
 };
 
 function getDirectories(srcpath) {
