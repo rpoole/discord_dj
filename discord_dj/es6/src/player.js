@@ -23,8 +23,8 @@ export default class MusicPlayer {
       return Promise.reject('Already playing!');
     }
 
-    this.playedSongs = [];
     this.currentPlaylist = this.playedSongs.concat(this.currentPlaylist);
+    this.playedSongs = [];
 
     return this._next();
   }

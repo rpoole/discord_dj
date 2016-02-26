@@ -1,13 +1,13 @@
 import MusicPlayer from '../src/player.js';
 
 describe('MusicPlayer', () => {
-  let player, vc;
+  let player, vc, songs;
 
   beforeEach( () => {
-    vc = {
-    };
+    vc = {};
 
     player = new MusicPlayer(vc);
+    songs = ['songA', 'songB'];
   });
 
   describe('constructor', () => {
@@ -27,14 +27,46 @@ describe('MusicPlayer', () => {
 
   describe('addSongsToCurrentPlaylist', () => {
     it('should add songs to the current playlist', () => {
-      player.addSongsToCurrentPlaylist(['song', 'song']);
-      expect(player.currentPlaylist).toEqual(['song', 'song']);
+      player.addSongsToCurrentPlaylist(songs);
+      expect(player.currentPlaylist).toEqual(songs);
     });
   });
 
   describe('start', () => {
-    it('should fail if already playing');
-    it('should start from the beginning of the playlist');
-    it('should start a song');
+    beforeEach(() => {
+      player._next = () => {
+        return Promise.resolve();
+      };
+    });
+
+    it('should fail if already playing', done => {
+      player.isPlaying = true;
+      player
+        .start()
+        .catch(() => {
+          done();
+        });
+    });
+
+    it('should start from the beginning of the playlist', done => {
+      player.currentPlaylist = songs;
+      player.playedSongs = ['songC'];
+      player.start()
+        .then( () => {
+          expect(player.currentPlaylist[0]).toEqual('songC');
+          done();
+        });
+    });
+
+    it('should start a song', done => {
+      player.currentPlaylist = songs;
+      spyOn(player, '_next').and.callThrough();
+
+      player.start()
+        .then(() => {
+          expect(player._next).toHaveBeenCalled();
+          done();
+        });
+    });
   });
 });

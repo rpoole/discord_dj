@@ -8,3 +8,4 @@ settings.json
 .ackrc
 .DS_STORE
 playlists/
+coverage/
