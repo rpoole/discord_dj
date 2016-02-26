@@ -77,7 +77,7 @@ let commands = {
     return bot
       .reply(msg, response);
   },
-  test({msg}) {
+  zack({msg}) {
     let apiKey = 'A9F8F8AE71DB176986D19B3645B3EE4F';
     let tricepzID = '76561198043899518';
     let options = {
@@ -135,11 +135,12 @@ let commands = {
                   }
                 });
 
-                let heroes = getDirectories(heroIDs.heroes);
+                let heroes = heroIDs.heroes;
 
                 heroes.forEach(p => {
                   if (p.id === heroID) {
                     heroName = p.localized_name;
+                    console.log(heroName);
                   }
                 });
 
