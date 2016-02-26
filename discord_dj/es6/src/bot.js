@@ -3,10 +3,10 @@
 let fs = require('fs');
 let path = require('path');
 let Discord = require('discord.js');
-let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-let MusicPlayer = require('./player.js');
+import MusicPlayer from './player.js';
 let ytdl = require('ytdl-core');
 
+let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
 let bot = new Discord.Client();
 let player = null;
 

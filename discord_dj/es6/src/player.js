@@ -1,12 +1,11 @@
 const volume = 0.1;
 
-class MusicPlayer {
+export default class MusicPlayer {
 
   constructor(vc) {
     this.vc = vc;
     this.currentPlaylist = [];
     this.playedSongs = [];
-    this.currentSong = null;
     this.isPlaying = false;
     this.shouldStop = false;
   }
@@ -78,5 +77,3 @@ class MusicPlayer {
     return Promise.resolve('Player stopped.');
   }
 }
-
-module.exports = MusicPlayer;
