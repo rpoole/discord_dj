@@ -1,10 +1,10 @@
 "use strict";
 
-let fs = require('fs');
-let path = require('path');
-let Discord = require('discord.js');
+import fs from 'fs';
+import path from 'path';
+import Discord from 'discord.js';
 import MusicPlayer from './player.js';
-let ytdl = require('ytdl-core');
+import ytdl from 'ytdl-core';
 
 let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
 let bot = new Discord.Client();
