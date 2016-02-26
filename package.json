@@ -12,6 +12,7 @@
     "gulp-jshint": "^2.0.0",
     "gulp-shell": "0.5.2",
     "jshint": "^2.9.1",
+    "request-promise": "^2.0.1",
     "run-sequence": "1.1.5"
   },
   "dependencies": {

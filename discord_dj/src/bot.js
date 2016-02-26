@@ -4,9 +4,10 @@ let fs = require('fs');
 let path = require('path');
 let Discord = require('discord.js');
 let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
-let rest = require('node-rest-client');
+let heroIDs = JSON.parse(fs.readFileSync('heroIDs.json', 'utf8'));
 let MusicPlayer = require('./player.js');
 let ytdl = require('ytdl-core');
+let rp = require('request-promise');
 
 let bot = new Discord.Client();
 let player = null;
@@ -14,11 +15,11 @@ let player = null;
 const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4', '.mp3'];
 
 let commands = {
-  request({msg: msg, args: args}) {
+  request({msg, args}) {
     ytdl(args.toString(), {filter: function(format) { return !format.bitrate && format.audioBitrate; }})
         .pipe(fs.createWriteStream('test.mp4'));
   },
-  summon({msg: msg}) {
+  summon({msg}) {
     if (!msg.author.voiceChannel) {
       return Promise.reject('You must be in a voice room!');
     }
@@ -33,7 +34,7 @@ let commands = {
           .reply(msg, joinedMessage);
       });
   },
-  start({args: args}) {
+  start({args}) {
     if (!bot.voiceConnection) {
       return Promise.reject('You need to summon the bot to a room first!.');
     }
@@ -70,44 +71,94 @@ let commands = {
 
     return player.stop();
   },
-  help({msg: msg}) {
+  help({msg}) {
     let availableCommands = Object.keys(this).join(', ');
     let response = `Available commands are: ${availableCommands}.`;
     return bot
       .reply(msg, response);
   },
-  test({msg: msg}) {
+  test({msg}) {
     let apiKey = 'A9F8F8AE71DB176986D19B3645B3EE4F';
     let tricepzID = '76561198043899518';
-    let test = new rest.Client();
-    let radiantVictory = '';
-    test.get(`https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/v001/?account_id=${tricepzID}&key=${apiKey}`,
-        function (data) {
-          let mostRecentMatch = (data.result.matches[0].match_id);
-          test.get(`https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/v1/?key=${apiKey}&match_id=${mostRecentMatch}`,
-            function (data) {
-              if (data.result.radiant_win === 0) {
-                console.log('wtf');
-                radiantVictory = 'lost';
-              }
-              else {
-                console.log('okay');
-                radiantVictory = 'won';
-                console.log('zzz');
-                return radiantVictory;
-              }
+    let options = {
+      url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/v001`,
+      qs: {
+        key: apiKey,
+        account_id: tricepzID
+      },
+      json: true
+    };
 
-              data.result.players.find( function isZack(element) {
-                var start = '83633790';
-                while (start != element) {
-                  return false;
+    rp(options)
+      .then(function (data) {
+        let mostRecentMatch = (data.result.matches[0].match_id);
+        let optionsTwo = {
+          url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/v1`,
+          qs: {
+            key: apiKey,
+            match_id: mostRecentMatch
+          },
+          json: true
+        };
+
+        rp(optionsTwo)
+            .then(function (data) {
+                let result = '';
+                if (data.result.radiant_win === 0) {
+                  console.log('wtf');
+                  result = 'loss';
                 }
-                return element;
-              });
+                else {
+                  console.log('okay');
+                  result = 'win';
+                }
+
+                let kills = 0;
+                let deaths = 0;
+                let assists = 0;
+                let heroID = 0;
+                let heroName = '';
+                let players = [];
+
+                for (let i = 0; i < 10; i++) {
+                  players.push(data.result.players[i]);
+                  console.log('test');
+                }
+
+                players.forEach(v => {
+                  if (v.account_id === 83633790) {
+                    kills = v.kills;
+                    deaths = v.deaths;
+                    assists = v.assists;
+                    heroID = v.hero_id;
+                    console.log(v);
+                  }
+                });
+
+                let heroes = getDirectories(heroIDs.heroes);
+
+                heroes.forEach(p => {
+                  if (p.id === heroID) {
+                    heroName = p.localized_name;
+                  }
+                });
+
+                let completeMessage = `Zack's most recent match:\n Hero: ${heroName}\n Result: ${result}\n Kills: ${kills}\n Deaths: ${deaths}\n Assists: ${assists}`;
+
+                return bot
+                  .reply(msg, completeMessage);
+            })
+            .catch(function (err) {
+              console.log('second rp failed');
+              console.log(err);
             });
-        });
-    return bot
-        .reply(msg, radiantVictory);
+      })
+      .catch(function (err) {
+        console.log('first rp failed');
+        console.log(err);
+      });
+
+    return Promise.resolve();
   }
 };
 
