@@ -6,7 +6,6 @@ const jshint = require('gulp-jshint');
 const gulpjasmine = require('gulp-jasmine');
 const istanbul = require('gulp-istanbul');
 
-
 gulp.task('default', callback => {
   runSequence(
       'lint',
@@ -46,20 +45,26 @@ gulp.task('lint', () => {
   .pipe(jshint.reporter('fail'));
 });
 
-gulp.task('jasmine', ['transpile'], () => {
-  return gulp.src('discord_dj/es6/test/**/*.js')
+gulp.task('transpile-tests', () => {
+  return gulp
+    .src('discord_dj/es6/test/**/*.js')
     .pipe(babel({
       presets: ['es2015']
     }))
-    .pipe(gulp.dest('discord_dj/js/test/'))
+    .pipe(gulp.dest('discord_dj/js/test/'));
+});
+
+gulp.task('jasmine', ['transpile', 'transpile-tests'], () => {
+  return gulp
+    .src('discord_dj/js/test/**/*.js')
     .pipe(gulpjasmine());
 });
 
-gulp.task('cover', () => {
+gulp.task('cover', ['transpile', 'transpile-tests'], () => {
   return gulp
     .src(['discord_dj/js/src/**/*.js'])
     .pipe(istanbul({
-      includeUntested: true,
+      includeUntested: true
     }))
     .pipe(istanbul.hookRequire());
 });
@@ -73,7 +78,7 @@ gulp.task('coverage', ['cover'], () => {
 
 gulp.task('test', callback => {
   runSequence(
-  'lint',
-  'jasmine',
-  callback);
+      'lint',
+      'jasmine',
+      callback);
 });
