@@ -1,6 +1,5 @@
 "use strict";
 
-let heroIDs = JSON.parse(fs.readFileSync('heroIDs.json', 'utf8'));
 import fs from 'fs';
 import path from 'path';
 import Discord from 'discord.js';
@@ -8,6 +7,7 @@ import MusicPlayer from './player.js';
 import ytdl from 'ytdl-core';
 import rp from 'request-promise';
 
+let heroIDs = JSON.parse(fs.readFileSync('heroIDs.json', 'utf8'));
 let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
 let bot = new Discord.Client();
 let player = null;
@@ -77,88 +77,133 @@ let commands = {
     return bot
       .reply(msg, response);
   },
-  zack({msg}) {
+  zack({msg, args}) {
     let apiKey = 'A9F8F8AE71DB176986D19B3645B3EE4F';
     let tricepzID = '76561198043899518';
+    let matchesRequested = 0;
+    let heroRequested = 0;
+    let heroes = heroIDs.heroes;
+
+    if (isNaN(parseInt(args[0])) === false && isNaN(parseInt(args[1])) === true) {
+      matchesRequested = args[0];
+      heroRequested = args[1];
+    }
+    else if (isNaN(parseInt(args[0])) === true && isNaN(parseInt(args[1])) === false) {
+      heroRequested = args[0];
+      matchesRequested = args[1];
+    }
+
+    //console.log(args[0]);
+    //console.log(parseInt(args[0]));
+    //console.log(typeof (args[0]));
+    //console.log(args[1]);
+    //console.log(parseInt(args[1]));
+    //console.log(typeof (args[1]));
+
+    heroes.forEach(p => {
+      let noSpaceName = p.localized_name.replace(/\s/g, '');
+      //console.log(noSpaceName);
+      if (noSpaceName === heroRequested) {
+        heroRequested = p.id;
+      }
+    });
+
     let options = {
       url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/v001`,
       qs: {
         key: apiKey,
-        account_id: tricepzID
+        account_id: tricepzID,
+        hero_id: heroRequested,
+        matches_requested: matchesRequested
       },
       json: true
     };
 
     rp(options)
       .then(function (data) {
-        let mostRecentMatch = (data.result.matches[0].match_id);
-        let optionsTwo = {
-          url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/v1`,
-          qs: {
-            key: apiKey,
-            match_id: mostRecentMatch
-          },
-          json: true
-        };
+        let matchIDs = [];
+        data.result.matches.forEach(v => {
+          matchIDs.push(v.match_id);
+        });
 
-        rp(optionsTwo)
+
+        //console.log(matchIDs);
+
+        matchIDs.forEach(v => {
+          let optionsTwo = {
+            url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/v1`,
+            qs: {
+              key: apiKey,
+              match_id: v
+            },
+            json: true
+          };
+
+          rp(optionsTwo)
             .then(function (data) {
-                let result = '';
-                if (data.result.radiant_win === 0) {
-                  console.log('wtf');
+
+              let result = 'win';
+              let durationMinutes = Math.floor(data.result.duration / 60);
+              let durationSeconds = (data.result.duration % 60);
+
+              let kills = 0;
+              let deaths = 0;
+              let assists = 0;
+              let heroID = 0;
+              let heroName = '';
+              let playerSlot = 0;
+              let players = [];
+
+              console.log(data);
+
+              for (let i = 0; i < 10; i++) {
+                players.push(data.result.players[i]);
+              }
+
+              players.forEach(v => {
+                if (v.account_id === 83633790) {
+                  kills = v.kills;
+                  deaths = v.deaths;
+                  assists = v.assists;
+                  heroID = v.hero_id;
+                  playerSlot = v.player_slot;
+                  //console.log(v);
+                }
+              });
+
+              heroes.forEach(p => {
+                if (p.id === heroID) {
+                  heroName = p.localized_name;
+                  //console.log(heroName);
+                }
+              });
+
+              if (data.result.radiant_win === false) {
+                if (playerSlot <= 5) {
                   result = 'loss';
                 }
-                else {
-                  console.log('okay');
-                  result = 'win';
+              }
+              else {
+                if (playerSlot >= 5) {
+                  result = 'loss';
                 }
+              }
 
-                let kills = 0;
-                let deaths = 0;
-                let assists = 0;
-                let heroID = 0;
-                let heroName = '';
-                let players = [];
+              let completeMessage = `\`\`\`Hero: ${heroName}\nDuration: ${durationMinutes}:${durationSeconds}\nResult: ${result}\nKills: ${kills}\nDeaths: ${deaths}\nAssists: ${assists}\`\`\``;
 
-                for (let i = 0; i < 10; i++) {
-                  players.push(data.result.players[i]);
-                  console.log('test');
-                }
-
-                players.forEach(v => {
-                  if (v.account_id === 83633790) {
-                    kills = v.kills;
-                    deaths = v.deaths;
-                    assists = v.assists;
-                    heroID = v.hero_id;
-                    console.log(v);
-                  }
-                });
-
-                let heroes = heroIDs.heroes;
-
-                heroes.forEach(p => {
-                  if (p.id === heroID) {
-                    heroName = p.localized_name;
-                    console.log(heroName);
-                  }
-                });
-
-                let completeMessage = `Zack's most recent match:\n Hero: ${heroName}\n Result: ${result}\n Kills: ${kills}\n Deaths: ${deaths}\n Assists: ${assists}`;
-
-                return bot
-                  .reply(msg, completeMessage);
+              return bot
+                .sendMessage(msg.channel, completeMessage);
             })
             .catch(function (err) {
               console.log('second rp failed');
               console.log(err);
             });
+        });
       })
       .catch(function (err) {
         console.log('first rp failed');
         console.log(err);
       });
-
     return Promise.resolve();
   }
 };
@@ -179,8 +224,8 @@ function runCommand(command, opts) {
 
 function parseCommandInput(cleanContent) {
   let commandArgs = cleanContent.split(' ');
-  commandArgs.shift(); // remove the mention
   let command = commandArgs.splice(0,1);
+  command[0] = command[0].substring(1);
 
   let commandMsgStr = command;
   if (commandArgs.length > 0) {
@@ -190,13 +235,25 @@ function parseCommandInput(cleanContent) {
   return [command, commandArgs, commandMsgStr];
 }
 
+//function delay(interval) {
+//  return new Promise(function(resolve) {
+//    setTimeout(resolve, interval);
+//  });
+//}
+
 // register handlers
 bot.on('message', msg => {
-  if (!msg.isMentioned(bot.user)) {
+  let text = msg.cleanContent;
+  if(text.indexOf('/', 0) !== 0) {
+    console.log(text);
     return;
   }
 
   let [command, commandArgs, commandMsgStr] = parseCommandInput(msg.cleanContent);
+
+  //console.log(command);
+  //console.log(commandArgs);
+  //console.log(commandMsgStr);
 
   let opts = {
     msg: msg,
