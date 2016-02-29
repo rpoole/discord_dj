@@ -1,21 +1,12 @@
 "use strict";
 
-<<<<<<< HEAD:discord_dj/src/bot.js
-let fs = require('fs');
-let path = require('path');
-let Discord = require('discord.js');
-let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
 let heroIDs = JSON.parse(fs.readFileSync('heroIDs.json', 'utf8'));
-let MusicPlayer = require('./player.js');
-let ytdl = require('ytdl-core');
-let rp = require('request-promise');
-=======
 import fs from 'fs';
 import path from 'path';
 import Discord from 'discord.js';
 import MusicPlayer from './player.js';
 import ytdl from 'ytdl-core';
->>>>>>> abea1d2c6f7e871ab81d966456282e96a8481246:discord_dj/es6/src/bot.js
+import rp from 'request-promise';
 
 let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
 let bot = new Discord.Client();
