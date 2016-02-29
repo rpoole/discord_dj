@@ -4,15 +4,28 @@
   "description": "Bot to play local files as well as take requests in discord.",
   "main": "index.js",
   "author": "robert.daniel.poole@gmail.com",
+  "license": "WTFPL",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/jasmine/jasmine-npm"
+  },
   "devDependencies": {
     "babel-cli": "6.5.1",
     "babel-preset-es2015": "6.5.0",
     "gulp": "3.9.1",
     "gulp-babel": "6.1.2",
-    "gulp-jshint": "^2.0.0",
+    "gulp-istanbul": "0.10.3",
+    "gulp-jasmine": "2.3.0",
+    "gulp-jshint": "2.0.0",
     "gulp-shell": "0.5.2",
+<<<<<<< HEAD
     "jshint": "^2.9.1",
     "request-promise": "^2.0.1",
+=======
+    "istanbul": "0.4.2",
+    "jasmine": "2.4.1",
+    "jshint": "2.9.1",
+>>>>>>> abea1d2c6f7e871ab81d966456282e96a8481246
     "run-sequence": "1.1.5"
   },
   "dependencies": {
