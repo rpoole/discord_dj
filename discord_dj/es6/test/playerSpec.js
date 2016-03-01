@@ -1,4 +1,5 @@
 import MusicPlayer from '../src/player.js';
+import * as utils from '../src/utils.js';
 
 describe('MusicPlayer', () => {
   let player, vc, songs;
@@ -44,6 +45,16 @@ describe('MusicPlayer', () => {
       player
         .start()
         .catch(() => {
+          done();
+        });
+    });
+
+    it('should shuffle the order if specified', done => {
+      spyOn(utils, 'shuffleArray');
+      player.currentPlaylist = songs;
+      player.start(true)
+        .then(() => {
+          expect(utils.shuffleArray).toHaveBeenCalled();
           done();
         });
     });

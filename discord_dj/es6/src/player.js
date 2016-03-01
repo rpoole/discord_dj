@@ -1,5 +1,7 @@
 const volume = 0.1;
 
+import {shuffleArray} from './utils.js';
+
 export default class MusicPlayer {
 
   constructor(vc) {
@@ -18,12 +20,17 @@ export default class MusicPlayer {
     this.currentPlaylist = this.currentPlaylist.concat(songFiles);
   }
 
-  start() {
+  start(shuffle) {
     if (this.isPlaying) {
       return Promise.reject('Already playing!');
     }
 
     this.currentPlaylist = this.playedSongs.concat(this.currentPlaylist);
+
+    if (shuffle) {
+      this.currentPlaylist = shuffleArray(this.currentPlaylist);
+    }
+
     this.playedSongs = [];
 
     return this._next();

@@ -37,6 +37,12 @@ let commands = {
       return Promise.reject('You need to summon the bot to a room first!.');
     }
 
+    let shufflePos = args.indexOf('shuffle');
+    let shuffle = shufflePos !== -1;
+    if (shuffle) {
+      args.splice(shufflePos, 1);
+    }
+
     let selectedPlaylists = args;
     let playlists = getDirectories(settings.playlistFolder);
     let fileNames = [];
@@ -57,7 +63,7 @@ let commands = {
       });
     });
     player.addSongsToCurrentPlaylist(fileNames);
-    return player.start();
+    return player.start(shuffle);
   },
   skip() {
     return player.skip();
