@@ -193,12 +193,39 @@ let commands = {
               console.error(err);
             });
         });
-      })
-      .catch(err => {
-        console.error('first rp failed');
-        console.error(err);
       });
-  }
+  },
+  dota({msg, args}) {
+    let teamName = args[0];
+    let options = {
+      url: `http://dailydota2.com/match-api`,
+      json: true
+    };
+
+    return rp(options)
+      .then(function (data) {
+        data.matches.forEach(v => {
+          if(args[0]) {
+            if((v.team2.team_tag === teamName) || (v.team1.team_tag === teamName)) {
+              let tempDateTime = new Date(v.starttime_unix * 1000);
+              let readableDateTime = tempDateTime.toLocaleString();
+              let completeMessage = `${v.team1.team_tag} vs. ${v.team2.team_tag}\n\`\`\`${v.league.name}\nBo${v.series_type}\n${readableDateTime}\`\`\``;
+
+              return bot
+                .sendMessage(msg.channel, completeMessage);
+            }
+          }
+          else
+          {
+            let readableDateTime = new Date(v.starttime_unix * 1000);
+            let completeMessage = `${v.team1.team_tag} vs. ${v.team2.team_tag}\n\`\`\`BEST OF ${v.series_type}\nStart Time: ${readableDateTime}\`\`\``;
+
+            return bot
+              .sendMessage(msg.channel, completeMessage);
+          }
+        });
+      });
+    }
 };
 
 function getDirectories(srcpath) {
