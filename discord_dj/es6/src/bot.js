@@ -90,25 +90,18 @@ let commands = {
     let heroRequested = 0;
     let heroes = heroIDs.heroes;
 
-    if (isNaN(parseInt(args[0])) === false && isNaN(parseInt(args[1])) === true) {
-      matchesRequested = args[0];
-      heroRequested = args[1];
-    }
-    else if (isNaN(parseInt(args[0])) === true && isNaN(parseInt(args[1])) === false) {
-      heroRequested = args[0];
-      matchesRequested = args[1];
-    }
+    let firstArgIsNum = isNaN(parseInt(args[0]));
+    let secondArgIsNum = isNaN(parseInt(args[1]));
 
-    //console.log(args[0]);
-    //console.log(parseInt(args[0]));
-    //console.log(typeof (args[0]));
-    //console.log(args[1]);
-    //console.log(parseInt(args[1]));
-    //console.log(typeof (args[1]));
+    if(!firstArgIsNum && secondArgIsNum) {
+      [matchesRequested, heroRequested] = args;
+    }
+    else {
+      [heroRequested, matchesRequested] = args;
+    }
 
     heroes.forEach(p => {
-      let noSpaceName = p.localized_name.replace(/\s/g, '');
-      //console.log(noSpaceName);
+      let noSpaceName = p.localized_name.replace(' ', '');
       if (noSpaceName === heroRequested) {
         heroRequested = p.id;
       }
@@ -125,16 +118,15 @@ let commands = {
       json: true
     };
 
-    rp(options)
-      .then(function (data) {
+    return rp(options)
+      .then(data => {
         let matchIDs = [];
         data.result.matches.forEach(v => {
           matchIDs.push(v.match_id);
         });
 
 
-        //console.log(matchIDs);
-
+        // TODO loop using promises
         matchIDs.forEach(v => {
           let optionsTwo = {
             url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/v1`,
@@ -146,7 +138,7 @@ let commands = {
           };
 
           rp(optionsTwo)
-            .then(function (data) {
+            .then(data => {
 
               let result = 'win';
               let durationMinutes = Math.floor(data.result.duration / 60);
@@ -160,8 +152,6 @@ let commands = {
               let playerSlot = 0;
               let players = [];
 
-              console.log(data);
-
               for (let i = 0; i < 10; i++) {
                 players.push(data.result.players[i]);
               }
@@ -173,14 +163,12 @@ let commands = {
                   assists = v.assists;
                   heroID = v.hero_id;
                   playerSlot = v.player_slot;
-                  //console.log(v);
                 }
               });
 
               heroes.forEach(p => {
                 if (p.id === heroID) {
                   heroName = p.localized_name;
-                  //console.log(heroName);
                 }
               });
 
@@ -200,17 +188,16 @@ let commands = {
               return bot
                 .sendMessage(msg.channel, completeMessage);
             })
-            .catch(function (err) {
-              console.log('second rp failed');
-              console.log(err);
+            .catch(err => {
+              console.error('second rp failed');
+              console.error(err);
             });
         });
       })
-      .catch(function (err) {
-        console.log('first rp failed');
-        console.log(err);
+      .catch(err => {
+        console.error('first rp failed');
+        console.error(err);
       });
-    return Promise.resolve();
   }
 };
 
@@ -230,8 +217,8 @@ function runCommand(command, opts) {
 
 function parseCommandInput(cleanContent) {
   let commandArgs = cleanContent.split(' ');
+  commandArgs.shift();
   let command = commandArgs.splice(0,1);
-  command[0] = command[0].substring(1);
 
   let commandMsgStr = command;
   if (commandArgs.length > 0) {
@@ -241,25 +228,13 @@ function parseCommandInput(cleanContent) {
   return [command, commandArgs, commandMsgStr];
 }
 
-//function delay(interval) {
-//  return new Promise(function(resolve) {
-//    setTimeout(resolve, interval);
-//  });
-//}
-
 // register handlers
 bot.on('message', msg => {
-  let text = msg.cleanContent;
-  if(text.indexOf('/', 0) !== 0) {
-    console.log(text);
+  if (!msg.isMentioned(bot.user)) {
     return;
   }
 
   let [command, commandArgs, commandMsgStr] = parseCommandInput(msg.cleanContent);
-
-  //console.log(command);
-  //console.log(commandArgs);
-  //console.log(commandMsgStr);
 
   let opts = {
     msg: msg,
