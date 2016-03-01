@@ -18,14 +18,21 @@
     "gulp-jasmine": "2.3.0",
     "gulp-jshint": "2.0.0",
     "gulp-shell": "0.5.2",
+<<<<<<< HEAD
+    "jshint": "^2.9.1",
+    "request-promise": "^2.0.1",
+=======
     "istanbul": "0.4.2",
     "jasmine": "2.4.1",
     "jshint": "2.9.1",
+>>>>>>> abea1d2c6f7e871ab81d966456282e96a8481246
     "run-sequence": "1.1.5"
   },
   "dependencies": {
     "discord.js": "6.0.0",
     "node-opus": "^0.1.12",
-    "ytdl-core": "0.7.10"
+    "ytdl-core": "0.7.10",
+    "jQuery": "1.7.4",
+    "node-jsdom": "3.1.5"
   }
 }
