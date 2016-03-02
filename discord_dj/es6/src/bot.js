@@ -83,22 +83,41 @@ let commands = {
     return bot
       .reply(msg, response);
   },
-  zack({msg, args}) {
+  stats({msg, args}) {
+    // <editor-fold desc="zzz">
     let apiKey = 'A9F8F8AE71DB176986D19B3645B3EE4F';
-    let tricepzID = '76561198043899518';
+    let playerID = '';
     let matchesRequested = 0;
     let heroRequested = 0;
     let heroes = heroIDs.heroes;
+    let players = {
+        zack: ['76561198043899518', '83633790'],
+        scott: ['76561198031758954', '71493226'],
+        rob: ['76561198026942332', '66676604'],
+        ralph: ['76561197977345234', '17079506'],
+        aaron: ['76561198021710539', '61444811'],
+        joseph: ['76561198010457614', '50191886'],
+        john: ['76561198186925302', '226659574'],
+        steve: ['76561197977310218', '17044490'],
+        matt: ['76561197964365391', '4099663'],
+        alex: ['76561197964638003', '4372275'],
+        jake: ['76561198158605918', '198340190'],
+        tom: ['76561198024081774', '63816046']
+    };
+    let allMessages = [];
 
-    let firstArgIsNum = isNaN(parseInt(args[0]));
     let secondArgIsNum = isNaN(parseInt(args[1]));
+    let thirdArgIsNum = isNaN(parseInt(args[2]));
 
-    if(!firstArgIsNum && secondArgIsNum) {
-      [matchesRequested, heroRequested] = args;
+    if(!secondArgIsNum && thirdArgIsNum) {
+      [, matchesRequested, heroRequested] = args;
     }
     else {
-      [heroRequested, matchesRequested] = args;
+      [, heroRequested, matchesRequested] = args;
     }
+
+    let playerRequested = args[0];
+    playerID = players[playerRequested];
 
     heroes.forEach(p => {
       let noSpaceName = p.localized_name.replace(' ', '');
@@ -107,17 +126,24 @@ let commands = {
       }
     });
 
+    if(typeof matchesRequested === 'undefined') {
+      matchesRequested = 0;
+    }
+    if(typeof heroRequested === 'undefined') {
+      heroRequested = 0;
+    }
+
     let options = {
       url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/v001`,
       qs: {
         key: apiKey,
-        account_id: tricepzID,
+        account_id: playerID[0],
         hero_id: heroRequested,
         matches_requested: matchesRequested
       },
       json: true
     };
-
+    //</editor-fold>
     return rp(options)
       .then(data => {
         let matchIDs = [];
@@ -125,21 +151,20 @@ let commands = {
           matchIDs.push(v.match_id);
         });
 
-
         // TODO loop using promises
-        matchIDs.forEach(v => {
+        matchIDs.forEach(k => {
           let optionsTwo = {
             url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/v1`,
             qs: {
               key: apiKey,
-              match_id: v
+              match_id: k
             },
             json: true
           };
 
           rp(optionsTwo)
             .then(data => {
-
+              //<editor-fold desc="zzz">
               let result = 'win';
               let durationMinutes = Math.floor(data.result.duration / 60);
               let durationSeconds = (data.result.duration % 60);
@@ -151,13 +176,14 @@ let commands = {
               let heroName = '';
               let playerSlot = 0;
               let players = [];
+              let matchDate = new Date(data.result.start_time * 1000);
 
               for (let i = 0; i < 10; i++) {
                 players.push(data.result.players[i]);
               }
 
               players.forEach(v => {
-                if (v.account_id === 83633790) {
+                if (v.account_id === parseInt(playerID[1])) {
                   kills = v.kills;
                   deaths = v.deaths;
                   assists = v.assists;
@@ -183,10 +209,20 @@ let commands = {
                 }
               }
 
-              let completeMessage = `\`\`\`Hero: ${heroName}\nDuration: ${durationMinutes}:${durationSeconds}\nResult: ${result}\nKills: ${kills}\nDeaths: ${deaths}\nAssists: ${assists}\`\`\``;
+              let readableDateTime = matchDate.toLocaleString();
+              let completeMessage = `\`\`\`${readableDateTime}\nHero: ${heroName}\nDuration: ${durationMinutes}:${durationSeconds}\nResult: ${result}\nKills: ${kills}\nDeaths: ${deaths}\nAssists: ${assists}\`\`\``;
+              // </editor-fold>
 
-              return bot
-                .sendMessage(msg.channel, completeMessage);
+              allMessages.push(completeMessage);
+              console.log(`ALL MESSAGES: ${allMessages.length}`);
+              console.log(`MATCHES REQUESTED: ${matchesRequested}`);
+              if (parseInt(allMessages.length) === parseInt(matchesRequested)) {
+                allMessages.sort();
+                allMessages.reverse();
+                bot.sendMessage(msg.channel, allMessages);
+                console.log(allMessages);
+              }
+              console.log('test3');
             })
             .catch(err => {
               console.error('second rp failed');
