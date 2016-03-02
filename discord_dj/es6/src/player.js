@@ -8,6 +8,7 @@ export default class MusicPlayer {
     this.vc = vc;
     this.currentPlaylist = [];
     this.playedSongs = [];
+    this.songName = '';
     this.isPlaying = false;
     this.shouldStop = false;
   }
@@ -42,6 +43,8 @@ export default class MusicPlayer {
     }
 
     let nextSong = this.currentPlaylist.shift();
+    let songName = nextSong.toString();
+    console.log(songName);
     this.playedSongs.push(nextSong);
 
     return this
@@ -60,6 +63,7 @@ export default class MusicPlayer {
           }
         });
       });
+
   }
 
   skip() {

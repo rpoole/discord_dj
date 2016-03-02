@@ -65,9 +65,11 @@ let commands = {
       });
     });
     player.addSongsToCurrentPlaylist(fileNames);
+    bot.setPlayingGame(player.songName);
     return player.start(shuffle);
   },
   skip() {
+    bot.setPlayingGame(player.songName);
     return player.skip();
   },
   stop() {
@@ -118,6 +120,7 @@ let commands = {
 
     let playerRequested = args[0];
     playerID = players[playerRequested];
+    playerRequested = playerRequested.toUpperCase();
 
     heroes.forEach(p => {
       let noSpaceName = p.localized_name.replace(' ', '');
@@ -151,7 +154,6 @@ let commands = {
           matchIDs.push(v.match_id);
         });
 
-        // TODO loop using promises
         matchIDs.forEach(k => {
           let optionsTwo = {
             url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/v1`,
@@ -216,7 +218,7 @@ let commands = {
               allMessages.push(completeMessage);
               console.log(`ALL MESSAGES: ${allMessages.length}`);
               console.log(`MATCHES REQUESTED: ${matchesRequested}`);
-              if (parseInt(allMessages.length) === parseInt(matchesRequested)) {
+              if (parseInt(allMessages.length) === parseInt(matchIDs.length)) {
                 allMessages.sort();
                 allMessages.reverse();
                 bot.sendMessage(msg.channel, allMessages);
