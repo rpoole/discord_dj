@@ -6,9 +6,12 @@ import Discord from 'discord.js';
 import MusicPlayer from './player.js';
 import ytdl from 'ytdl-core';
 import rp from 'request-promise';
+import mongoose from 'mongoose';
+import Quote from './models/quotes.server.model.js';
 
 let heroIDs = JSON.parse(fs.readFileSync('heroIDs.json', 'utf8'));
 let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
+//let quoteFile = JSON.parse(fs.openSync('quotes.json', 'r+'));
 let bot = new Discord.Client();
 let player = null;
 
@@ -216,8 +219,6 @@ let commands = {
               // </editor-fold>
 
               allMessages.push(completeMessage);
-              console.log(`ALL MESSAGES: ${allMessages.length}`);
-              console.log(`MATCHES REQUESTED: ${matchesRequested}`);
               if (parseInt(allMessages.length) === parseInt(matchIDs.length)) {
                 allMessages.sort();
                 allMessages.reverse();
@@ -263,9 +264,55 @@ let commands = {
           }
         });
       });
-    }
+    },
+  //quote({msg, args}) {
+  //  mongoose.connect('mongodb://sdonnelly:Apple123!@ds061464.mlab.com:61464/pluralsight');
+  //  let db = mongoose.connection;
+  //
+  //  return Promise
+  //    .resolve("Success!!!")
+  //    .then(() => {
+  //      db.on('error', console.error.bind(console, 'connection error:'));
+  //      db.once('open', (() => {
+  //        if(isNaN(parseInt(args[1]))) {
+  //          return Quote
+  //            .create(() => {
+  //              let entry = new Quote({
+  //                userName: args[0],
+  //                quoteText: args[1],
+  //                date: new Date(),
+  //                authorName: msg.author.username
+  //              });
+  //              entry.save(function (err) {
+  //                if (err) {
+  //                  return Promise.reject(err);
+  //                }
+  //              });
+  //            })
+  //            .then(() => {
+  //              bot
+  //                .sendMessage(msg.channel, 'Success!');
+  //              db.close();
+  //            })
+  //            .catch(function (err) {
+  //              console.log(err);
+  //            });
+  //        }
+  //        else {
+  //          Quote.find({authorName : `${args[0]}`}, 'userName authorName submittedDate quoteText', function (err, quote) {
+  //            if (err) {
+  //              console.log(quote);
+  //              return handleErr(err);
+  //            }
+  //            db.close();
+  //            return bot
+  //              .sendMessage(msg.channel, quote[args[1]].quoteText);
+  //          });
+  //        }
+  //      }));
+  //    });
+  //}
 };
-
 function getDirectories(srcpath) {
   return fs.readdirSync(srcpath).filter(file => {
     return fs.statSync(path.join(srcpath, file)).isDirectory();
