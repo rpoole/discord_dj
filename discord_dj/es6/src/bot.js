@@ -8,12 +8,16 @@ import ytdl from 'ytdl-core';
 import rp from 'request-promise';
 import mongoose from 'mongoose';
 import Quote from './models/quotes.server.model.js';
+import User from './models/users.server.model.js';
+import Match from '.models/matches.server.model.js';
 
 let heroIDs = JSON.parse(fs.readFileSync('heroIDs.json', 'utf8'));
 let settings = JSON.parse(fs.readFileSync('settings.json', 'utf8'));
 //let quoteFile = JSON.parse(fs.openSync('quotes.json', 'r+'));
 let bot = new Discord.Client();
 let player = null;
+let apiKey = 'A9F8F8AE71DB176986D19B3645B3EE4F';
+let heroes = heroIDs.heroes;
 
 const ALLOWED_FILE_TYPES = ['.m4a', '.webm', '.mp4', '.mp3'];
 
@@ -90,11 +94,10 @@ let commands = {
   },
   stats({msg, args}) {
     // <editor-fold desc="zzz">
-    let apiKey = 'A9F8F8AE71DB176986D19B3645B3EE4F';
     let playerID = '';
     let matchesRequested = 0;
     let heroRequested = 0;
-    let heroes = heroIDs.heroes;
+
     let players = {
         zack: ['76561198043899518', '83633790'],
         scott: ['76561198031758954', '71493226'],
@@ -265,53 +268,143 @@ let commands = {
         });
       });
     },
-  //quote({msg, args}) {
-  //  mongoose.connect('mongodb://sdonnelly:Apple123!@ds061464.mlab.com:61464/pluralsight');
-  //  let db = mongoose.connection;
-  //
-  //  return Promise
-  //    .resolve("Success!!!")
-  //    .then(() => {
-  //      db.on('error', console.error.bind(console, 'connection error:'));
-  //      db.once('open', (() => {
-  //        if(isNaN(parseInt(args[1]))) {
-  //          return Quote
-  //            .create(() => {
-  //              let entry = new Quote({
-  //                userName: args[0],
-  //                quoteText: args[1],
-  //                date: new Date(),
-  //                authorName: msg.author.username
-  //              });
-  //              entry.save(function (err) {
-  //                if (err) {
-  //                  return Promise.reject(err);
-  //                }
-  //              });
-  //            })
-  //            .then(() => {
-  //              bot
-  //                .sendMessage(msg.channel, 'Success!');
-  //              db.close();
-  //            })
-  //            .catch(function (err) {
-  //              console.log(err);
-  //            });
-  //        }
-  //        else {
-  //          Quote.find({authorName : `${args[0]}`}, 'userName authorName submittedDate quoteText', function (err, quote) {
-  //            if (err) {
-  //              console.log(quote);
-  //              return handleErr(err);
-  //            }
-  //            db.close();
-  //            return bot
-  //              .sendMessage(msg.channel, quote[args[1]].quoteText);
-  //          });
-  //        }
-  //      }));
-  //    });
-  //}
+  quote({msg, args}) {
+    mongoose.connect('mongodb://sdonnelly:Apple123!@ds061464.mlab.com:61464/pluralsight');
+    let db = mongoose.connection;
+
+    return Promise
+      .resolve("Success!!!")
+      .then(() => {
+        db.on('error', console.error.bind(console, 'connection error:'));
+        db.once('open', (() => {
+          if(isNaN(parseInt(args[1]))) {
+            return Quote
+              .create(() => {
+                let entry = new Quote({
+                  userName: args[0],
+                  quoteText: args[1],
+                  date: new Date(),
+                  authorName: msg.author.username
+                });
+                entry.save(function (err) {
+                  if (err) {
+                    return Promise.reject(err);
+                  }
+                });
+              })
+              .then(() => {
+                bot
+                  .sendMessage(msg.channel, 'Success!');
+                db.close();
+              })
+              .catch(function (err) {
+                console.log(err);
+              });
+          }
+          else {
+            Quote.find({authorName : `${args[0]}`}, 'userName authorName submittedDate quoteText', function (err, quote) {
+              if (err) {
+                console.log(quote);
+                return handleErr(err);
+              }
+              db.close();
+              return bot
+                .sendMessage(msg.channel, quote[args[1]].quoteText);
+            });
+          }
+        }));
+      });
+  },
+  updateDotAStats({msg, args}) {
+    if (!(msg.author.username === 'smd')) {
+      return Promise.reject("Update command is only usuable by Scott");
+    }
+
+    mongoose.connect('mongodb://sdonnelly:Apple123!@ds061464.mlab.com:61464/pluralsight');
+    let db = mongoose.connection;
+
+    return Promise
+      .resolve("Update Successful")
+      .then(() => {
+        db.on('error', console.error.bind(console, 'connection error:'));
+        db.once('open', (() => {
+              let options = {
+                url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchHistory/v001`,
+                qs: {
+                  key: apiKey,
+                  account_id: args[1]
+                },
+                json: true
+              };
+
+              return rp(options)
+                .then(data => {
+                  let matchIDs = [];
+                  data.result.matches.forEach(v => {
+                    matchIDs.push(v.match_id);
+                  });
+
+                  matchIDs.forEach(k => {
+                    let optionsTwo = {
+                      url: `https://api.steampowered.com/IDOTA2Match_570/GetMatchDetails/v1`,
+                      qs: {
+                        key: apiKey,
+                        match_id: k
+                      },
+                      json: true
+                    };
+
+                    rp(optionsTwo)
+                      .then(data => {
+                        return Match
+                          .update(() => {
+                            let entry = new Match({
+                              result = 'win';
+                              durationMinutes = Math.floor(data.result.duration / 60);
+                              durationSeconds = (data.result.duration % 60);
+                              kills = 0;
+                              deaths = 0;
+                              assists = 0;
+                              heroID = 0;
+                              heroName = '';
+                              playerSlot = 0;
+                              players = [];
+                              matchDate = new Date(data.result.start_time * 1000);
+
+                            for (let i = 0; i < 10; i++) {
+                              players.push(data.result.players[i]);
+                            }
+                            });
+                            entry.save(function (err) {
+                              if (err) {
+                                return Promise.reject(err);
+                              }
+                            });
+                          })
+                          .then(() => {
+                            bot
+                              .sendMessage(msg.channel, 'Success!');
+                            db.close();
+                          })
+                          .catch(function (err) {
+                            console.log(err);
+                          });
+
+            }
+            else {
+              Quote.find({authorName : `${args[0]}`}, 'userName authorName submittedDate quoteText', function (err, quote) {
+                if (err) {
+                  console.log(quote);
+                  return handleErr(err);
+                }
+                db.close();
+                return bot
+                  .sendMessage(msg.channel, quote[args[1]].quoteText);
+              });
+            }
+          }));
+        });
+  }
 };
 function getDirectories(srcpath) {
   return fs.readdirSync(srcpath).filter(file => {
